@@ -11,7 +11,7 @@ A lightweight Swift package providing an asynchronous cache abstraction and an i
 ## Requirements
 
 - Swift 6.3
-- iOS 15 or later
+- iOS 16 or later
 - macOS 13 or later
 
 ## Installation
