@@ -19,7 +19,7 @@ A lightweight Swift package providing an asynchronous cache abstraction and an i
 Add the package to your project via Swift Package Manager using the repository URL.
 
 ```swift
-.package(url: "https://github.com/your-org/Cache.git", from: "1.0.0"),
+.package(url: "https://github.com/kocoai/Cache.git", from: "1.0.0"),
 ```
 
 Then add the `Cache` product to your target dependencies.
