@@ -1,9 +1,9 @@
 // The Swift Programming Language
 // https://docs.swift.org/swift-book
 
-public protocol Cache {
-    associatedtype Key: Hashable
-    associatedtype Value
+public protocol Cache<Key, Value>: Sendable {
+    associatedtype Key: Hashable & Sendable
+    associatedtype Value: Sendable
 
     func value(for key: Key) async -> Value?
 

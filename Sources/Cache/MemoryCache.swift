@@ -6,8 +6,14 @@
 //
 import Foundation
 
-public actor MemoryCache<Key: Hashable & Sendable, Value: Sendable> {
+public actor MemoryCache<Key: Hashable & Sendable, Value: Sendable>: Cache {
     private var storage: [Key: CacheEntry<Value>] = [:]
+
+    public init() {}
+
+    public func insert(_ value: Value, for key: Key) async {
+        storage[key] = CacheEntry(value: value)
+    }
 
     public func value(for key: Key) async -> Value? {
         if let expiration = storage[key]?.expiration,
@@ -26,7 +32,7 @@ public actor MemoryCache<Key: Hashable & Sendable, Value: Sendable> {
                 expiration: ContinuousClock.now + expiration
             )
         } else {
-            storage[key] = CacheEntry(value: value)
+            await insert(value, for: key)
         }
     }
 
@@ -36,11 +42,6 @@ public actor MemoryCache<Key: Hashable & Sendable, Value: Sendable> {
 
     public func removeAll() async {
         storage.removeAll()
-    }
-
-    private func timeInterval(for duration: Duration) -> TimeInterval {
-        let components = duration.components
-        return TimeInterval(components.seconds) + TimeInterval(components.attoseconds) / 1_000_000_000_000_000_000
     }
 
     /// Purge expired cache

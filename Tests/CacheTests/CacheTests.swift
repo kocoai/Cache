@@ -40,6 +40,44 @@ struct ReadingTests {
     }
 }
 
+@Suite("Concurrency")
+struct ConcurrencyTests {
+    @Test
+    func concurrentInsertionsStoreAllValues() async {
+        let cache = MemoryCache<Int, Int>()
+
+        await withTaskGroup(of: Void.self) { group in
+            for value in 0..<100 {
+                group.addTask {
+                    await cache.insert(value, for: value)
+                }
+            }
+        }
+
+        for value in 0..<100 {
+            #expect(await cache.value(for: value) == value)
+        }
+    }
+
+    @Test
+    func concurrentInsertionsForSameKeyKeepOneSubmittedValue() async {
+        let cache = MemoryCache<String, Int>()
+
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask {
+                await cache.insert(1, for: "shared")
+            }
+            group.addTask {
+                await cache.insert(2, for: "shared")
+            }
+        }
+
+        let value = await cache.value(for: "shared")
+
+        #expect(value == 1 || value == 2)
+    }
+}
+
 @Suite("Removing")
 struct RemovingTests {
     @Test

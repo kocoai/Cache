@@ -8,7 +8,6 @@ import Foundation
 
 public struct CacheEntry<Value> {
     let value: Value
-
     let expiration: ContinuousClock.Instant?
 
     init(value: Value, expiration: ContinuousClock.Instant? = nil) {
