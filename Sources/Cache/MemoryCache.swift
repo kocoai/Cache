@@ -15,6 +15,31 @@ public actor MemoryCache<Key: Hashable & Sendable, Value: Sendable>: Cache {
         storage[key] = CacheEntry(value: value)
     }
 
+    @discardableResult
+    public func insertIfAbsent(_ value: Value, for key: Key) async -> Bool {
+        guard storage[key] == nil else {
+            return false
+        }
+
+        await insert(value, for: key)
+        return true
+    }
+
+    public func getOrInsert(_ value: Value, for key: Key) async -> Value {
+        if let entry = storage[key] {
+            if let expiration = entry.expiration,
+               expiration < ContinuousClock.now
+            {
+                storage.removeValue(forKey: key)
+            } else {
+                return entry.value
+            }
+        }
+
+        await insert(value, for: key)
+        return value
+    }
+
     public func value(for key: Key) async -> Value? {
         if let expiration = storage[key]?.expiration,
            expiration < ContinuousClock.now

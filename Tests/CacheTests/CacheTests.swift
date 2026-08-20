@@ -26,6 +26,37 @@ struct InsertionTests {
 
         #expect(value == 2)
     }
+
+    @Test
+    func insertIfAbsentDoesNotReplaceExistingValue() async {
+        let cache = MemoryCache<String, Int>()
+
+        #expect(await cache.insertIfAbsent(1, for: "A"))
+        #expect(await cache.insertIfAbsent(2, for: "A") == false)
+        #expect(await cache.value(for: "A") == 1)
+    }
+
+    @Test
+    func getOrInsertReturnsExistingValue() async {
+        let cache = MemoryCache<String, Int>()
+
+        await cache.insert(1, for: "A")
+
+        let value = await cache.getOrInsert(2, for: "A")
+
+        #expect(value == 1)
+        #expect(await cache.value(for: "A") == 1)
+    }
+
+    @Test
+    func getOrInsertStoresValueWhenKeyIsMissing() async {
+        let cache = MemoryCache<String, Int>()
+
+        let value = await cache.getOrInsert(2, for: "A")
+
+        #expect(value == 2)
+        #expect(await cache.value(for: "A") == 2)
+    }
 }
 
 @Suite("Reading")
@@ -75,6 +106,34 @@ struct ConcurrencyTests {
         let value = await cache.value(for: "shared")
 
         #expect(value == 1 || value == 2)
+    }
+
+    @Test
+    func concurrentInsertIfAbsentAcceptsOnlyOneValue() async {
+        let cache = MemoryCache<String, Int>()
+
+        let acceptedValues = await withTaskGroup(of: Int?.self, returning: [Int].self) { group in
+            for value in 1...100 {
+                group.addTask {
+                    guard await cache.insertIfAbsent(value, for: "shared") else {
+                        return nil
+                    }
+
+                    return value
+                }
+            }
+
+            var acceptedValues: [Int] = []
+            for await value in group {
+                if let value {
+                    acceptedValues.append(value)
+                }
+            }
+            return acceptedValues
+        }
+
+        #expect(acceptedValues.count == 1)
+        #expect(await cache.value(for: "shared") == acceptedValues[0])
     }
 }
 

@@ -7,6 +7,7 @@ A lightweight Swift package providing an asynchronous cache abstraction and an i
 - `Cache` protocol with async operations
 - `MemoryCache` actor implementation for thread-safe in-memory caching
 - Optional expiration support for cached entries
+- Atomic first-writer-wins and get-or-insert operations
 
 ## Requirements
 
@@ -40,6 +41,20 @@ Task {
 }
 ```
 
+  ### Concurrent writes
+
+  `insert` replaces an existing value. When multiple tasks write the same key concurrently, the value processed last by the actor wins. Use `insertIfAbsent` when the first accepted value should win:
+
+  ```swift
+  let inserted = await cache.insertIfAbsent("hello", for: "greeting")
+  ```
+
+  Use `getOrInsert` for an atomic read-or-write operation:
+
+  ```swift
+  let value = await cache.getOrInsert("hello", for: "greeting")
+  ```
+
 ### Removing entries
 
 ```swift
@@ -63,6 +78,8 @@ Task {
 - `Cache`
   - `func value(for key: Key) async -> Value?`
   - `func insert(_ value: Value, for key: Key) async`
+  - `func insertIfAbsent(_ value: Value, for key: Key) async -> Bool`
+  - `func getOrInsert(_ value: Value, for key: Key) async -> Value`
   - `func removeValue(for key: Key) async`
   - `func removeAll() async`
 
